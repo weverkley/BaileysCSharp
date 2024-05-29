@@ -15,6 +15,7 @@ using BaileysCSharp.Core.Models.Sending;
 using System.Globalization;
 using BaileysCSharp.Core.Types;
 using BaileysCSharp.Core.WABinary;
+using System.Net.Mail;
 
 namespace BaileysCSharp.Core.Sockets
 {
@@ -40,7 +41,7 @@ namespace BaileysCSharp.Core.Sockets
         {
             if (e.IsOnline.HasValue)
             {
-                SendActiveReceipts =e.IsOnline.Value;
+                SendActiveReceipts = e.IsOnline.Value;
                 Logger.Trace($"sendActiveReceipts set to '{SendActiveReceipts}'");
             }
         }
@@ -91,7 +92,7 @@ namespace BaileysCSharp.Core.Sockets
                     await RelayMessage(key.RemoteJid, message, new MessageRelayOptions()
                     {
                         MessageID = key.Id,
-                        UseUserDevicesCache = false
+                        UseUserDevicesCache = false,
                     });
                 }
                 else
@@ -827,5 +828,155 @@ namespace BaileysCSharp.Core.Sockets
 
 
         #endregion
+
+
+
+        public async Task<MediaDownload> DownloadMediaMessage(WebMessageInfo message)
+        {
+
+            if (message.Message.ImageMessage != null)
+            {
+                var attachement = message.Message.ImageMessage;
+                var result = await MediaMessageUtil.DownloadContentFromMessage(new ExternalBlobReference()
+                {
+                    DirectPath = attachement.DirectPath,
+                    FileEncSha256 = attachement.FileEncSha256,
+                    FileSha256 = attachement.FileSha256,
+                    FileSizeBytes = attachement.FileLength,
+                    MediaKey = attachement.MediaKey
+                }, "image", new MediaDownloadOptions());
+                return new MediaDownload()
+                {
+                    Data = result,
+                    MimeType = attachement.Mimetype,
+                    FileName = attachement.Caption + ".jpg",
+                    Caption = attachement.Caption,
+                };
+            }
+            if (message.Message.DocumentMessage != null)
+            {
+                var attachement = message.Message.DocumentMessage;
+                var result = await MediaMessageUtil.DownloadContentFromMessage(new ExternalBlobReference()
+                {
+                    DirectPath = attachement.DirectPath,
+                    FileEncSha256 = attachement.FileEncSha256,
+                    FileSha256 = attachement.FileSha256,
+                    FileSizeBytes = attachement.FileLength,
+                    MediaKey = attachement.MediaKey
+                }, "document", new MediaDownloadOptions());
+                return new MediaDownload()
+                {
+                    Data = result,
+                    MimeType = attachement.Mimetype,
+                    FileName = attachement.FileName,
+                    Caption = attachement.Caption,
+                };
+            }
+            if (message.Message.AudioMessage != null)
+            {
+                var attachement = message.Message.AudioMessage;
+                var result = await MediaMessageUtil.DownloadContentFromMessage(new ExternalBlobReference()
+                {
+                    DirectPath = attachement.DirectPath,
+                    FileEncSha256 = attachement.FileEncSha256,
+                    FileSha256 = attachement.FileSha256,
+                    FileSizeBytes = attachement.FileLength,
+                    MediaKey = attachement.MediaKey
+                }, "audio", new MediaDownloadOptions());
+                return new MediaDownload()
+                {
+                    Data = result,
+                    MimeType = attachement.Mimetype,
+                };
+            }
+            if (message.Message.VideoMessage != null)
+            {
+                var attachement = message.Message.VideoMessage;
+                var result = await MediaMessageUtil.DownloadContentFromMessage(new ExternalBlobReference()
+                {
+                    DirectPath = attachement.DirectPath,
+                    FileEncSha256 = attachement.FileEncSha256,
+                    FileSha256 = attachement.FileSha256,
+                    FileSizeBytes = attachement.FileLength,
+                    MediaKey = attachement.MediaKey
+                }, "video", new MediaDownloadOptions());
+                return new MediaDownload()
+                {
+                    Data = result,
+                    MimeType = attachement.Mimetype,
+                    Caption = attachement.Caption,
+                };
+            }
+            if (message.Message.StickerMessage != null)
+            {
+                var attachement = message.Message.StickerMessage;
+                var result = await MediaMessageUtil.DownloadContentFromMessage(new ExternalBlobReference()
+                {
+                    DirectPath = attachement.DirectPath,
+                    FileEncSha256 = attachement.FileEncSha256,
+                    FileSha256 = attachement.FileSha256,
+                    FileSizeBytes = attachement.FileLength,
+                    MediaKey = attachement.MediaKey
+                }, "sticker", new MediaDownloadOptions());
+                return new MediaDownload()
+                {
+                    Data = result,
+                    MimeType = attachement.Mimetype,
+                };
+            }
+            if (message.Message.PtvMessage != null)
+            {
+                var attachement = message.Message.PtvMessage;
+                var result = await MediaMessageUtil.DownloadContentFromMessage(new ExternalBlobReference()
+                {
+                    DirectPath = attachement.DirectPath,
+                    FileEncSha256 = attachement.FileEncSha256,
+                    FileSha256 = attachement.FileSha256,
+                    FileSizeBytes = attachement.FileLength,
+                    MediaKey = attachement.MediaKey
+                }, "ptv", new MediaDownloadOptions());
+                return new MediaDownload()
+                {
+                    Data = result,
+                    MimeType = attachement.Mimetype,
+                };
+            }
+            if (message.Message.PtvMessage != null)
+            {
+                var attachement = message.Message.PtvMessage;
+                var result = await MediaMessageUtil.DownloadContentFromMessage(new ExternalBlobReference()
+                {
+                    DirectPath = attachement.DirectPath,
+                    FileEncSha256 = attachement.FileEncSha256,
+                    FileSha256 = attachement.FileSha256,
+                    FileSizeBytes = attachement.FileLength,
+                    MediaKey = attachement.MediaKey
+                }, "ptv", new MediaDownloadOptions());
+                return new MediaDownload()
+                {
+                    Data = result,
+                    MimeType = attachement.Mimetype,
+                };
+            }
+            if (message.Message.ProductMessage != null)
+            {
+                var attachement = message.Message.ProductMessage;
+                var result = await MediaMessageUtil.DownloadContentFromMessage(new ExternalBlobReference()
+                {
+                    DirectPath = attachement.Catalog.CatalogImage.DirectPath,
+                    FileEncSha256 = attachement.Catalog.CatalogImage.FileEncSha256,
+                    FileSha256 = attachement.Catalog.CatalogImage.FileSha256,
+                    FileSizeBytes = attachement.Catalog.CatalogImage.FileLength,
+                    MediaKey = attachement.Catalog.CatalogImage.MediaKey
+                }, "image", new MediaDownloadOptions());
+                return new MediaDownload()
+                {
+                    Data = result,
+                    MimeType = attachement.Catalog.CatalogImage.Mimetype,
+                };
+            }
+
+            throw new NotSupportedException($"{message.Key.Id} does not have a media attached");
+        }
     }
 }

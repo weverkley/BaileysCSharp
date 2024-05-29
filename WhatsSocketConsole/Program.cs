@@ -27,6 +27,12 @@ namespace WhatsSocketConsole
 
         static void Main(string[] args)
         {
+            var ll = "audio/ogg; codecs=opus";
+
+            var mime = MimeTypeUtils.GetMimeType(".json");
+            var extension = MimeTypeUtils.GetExtension(ll);
+
+
             var config = new SocketConfig()
             {
                 SessionName = "27665245067",
@@ -92,6 +98,33 @@ namespace WhatsSocketConsole
                     if (msg.Message == null)
                         continue;
 
+                    if (msg.Message.ImageMessage != null)
+                    {
+                        var result = await socket.DownloadMediaMessage(msg);
+                    }
+
+                    if (msg.Message.DocumentMessage != null)
+                    {
+                        var result = await socket.DownloadMediaMessage(msg);
+                        File.WriteAllBytes(result.FileName, result.Data);
+                    }
+
+                    if (msg.Message.AudioMessage != null)
+                    {
+                        var result = await socket.DownloadMediaMessage(msg);
+                        File.WriteAllBytes($"audio.{MimeTypeUtils.GetExtension(result.MimeType)}", result.Data);
+                    }
+                    if (msg.Message.VideoMessage != null)
+                    {
+                        var result = await socket.DownloadMediaMessage(msg);
+                        File.WriteAllBytes($"video.{MimeTypeUtils.GetExtension(result.MimeType)}", result.Data);
+                    }
+                    if (msg.Message.StickerMessage != null)
+                    {
+                        var result = await socket.DownloadMediaMessage(msg);
+                        File.WriteAllBytes($"sticker.{MimeTypeUtils.GetExtension(result.MimeType)}", result.Data);
+                    }
+
                     if (msg.Message.ExtendedTextMessage == null)
                         continue;
 
@@ -99,11 +132,11 @@ namespace WhatsSocketConsole
                     {
                         var jid = JidUtils.JidDecode(msg.Key.Id);
                         // send a simple text!
-                        //var standard = await socket.SendMessage(msg.Key.RemoteJid, new TextMessageContent()
-                        //{
-                        //    Text = "Hi there from C#"
-                        //});
-                        //
+                        var standard = await socket.SendMessage(msg.Key.RemoteJid, new TextMessageContent()
+                        {
+                            Text = "Hi there from C#",
+                        });
+
                         ////send a reply messagge
                         //var quoted = await socket.SendMessage(msg.Key.RemoteJid,
                         //    new TextMessageContent() { Text = "Hi this is a C# reply" },
@@ -204,6 +237,8 @@ namespace WhatsSocketConsole
                         //var result = await socket.GroupInviteCode(groupId);
                         //var result = await socket.GroupGetInviteInfo("EzZfmQJDoyY7VPklVxVV9l");
                     }
+
+
                     messages.Add(msg);
                 }
             }
