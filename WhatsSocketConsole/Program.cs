@@ -15,6 +15,9 @@ using BaileysCSharp.Core.Models.Sending;
 using BaileysCSharp.Core.Types;
 using BaileysCSharp.Core.Utils;
 using System.Text.Json;
+using System.Text;
+using BaileysCSharp.Core.Logging;
+using BaileysCSharp.Core.WABinary;
 
 namespace WhatsSocketConsole
 {
@@ -27,15 +30,9 @@ namespace WhatsSocketConsole
 
         static void Main(string[] args)
         {
-            var ll = "audio/ogg; codecs=opus";
-
-            var mime = MimeTypeUtils.GetMimeType(".json");
-            var extension = MimeTypeUtils.GetExtension(ll);
-
-
             var config = new SocketConfig()
             {
-                SessionName = "27665245067",
+                SessionName = "27665458845745067",
             };
 
             var credsFile = Path.Join(config.CacheRoot, $"creds.json");
@@ -48,6 +45,7 @@ namespace WhatsSocketConsole
 
             BaseKeyStore keys = new FileKeyStore(config.CacheRoot);
 
+            config.Logger.Level = LogLevel.Raw;
             config.Auth = new AuthenticationState()
             {
                 Creds = authentication,
@@ -100,35 +98,38 @@ namespace WhatsSocketConsole
 
                     if (msg.Message.ImageMessage != null)
                     {
-                        var result = await socket.DownloadMediaMessage(msg);
+                        var result = await socket.DownloadMediaMessage(msg.Message);
                     }
 
                     if (msg.Message.DocumentMessage != null)
                     {
-                        var result = await socket.DownloadMediaMessage(msg);
+                        var result = await socket.DownloadMediaMessage(msg.Message);
                         File.WriteAllBytes(result.FileName, result.Data);
                     }
 
                     if (msg.Message.AudioMessage != null)
                     {
-                        var result = await socket.DownloadMediaMessage(msg);
+                        var result = await socket.DownloadMediaMessage(msg.Message);
                         File.WriteAllBytes($"audio.{MimeTypeUtils.GetExtension(result.MimeType)}", result.Data);
                     }
                     if (msg.Message.VideoMessage != null)
                     {
-                        var result = await socket.DownloadMediaMessage(msg);
+                        var result = await socket.DownloadMediaMessage(msg.Message);
                         File.WriteAllBytes($"video.{MimeTypeUtils.GetExtension(result.MimeType)}", result.Data);
                     }
                     if (msg.Message.StickerMessage != null)
                     {
-                        var result = await socket.DownloadMediaMessage(msg);
+                        var result = await socket.DownloadMediaMessage(msg.Message);
                         File.WriteAllBytes($"sticker.{MimeTypeUtils.GetExtension(result.MimeType)}", result.Data);
                     }
 
-                    if (msg.Message.ExtendedTextMessage == null)
-                        continue;
 
-                    if (msg.Key.FromMe == false && msg.Message.ExtendedTextMessage != null && msg.Message.ExtendedTextMessage.Text == "runtests")
+                    if (msg.Key.FromMe == false && (
+                        (msg.Message.ExtendedTextMessage != null && msg.Message.ExtendedTextMessage.Text == "runtests")
+                        ||
+                        (msg.Message.Conversation != null && msg.Message.Conversation == "runtests")
+                        )
+                        )
                     {
                         var jid = JidUtils.JidDecode(msg.Key.Id);
                         // send a simple text!
@@ -182,32 +183,32 @@ namespace WhatsSocketConsole
                         //});
                         //
                         //// Sending image
-                        //var imageMessage = await socket.SendMessage(msg.Key.RemoteJid, new ImageMessageContent()
-                        //{
-                        //    Image = File.Open($"{Directory.GetCurrentDirectory()}\\Media\\cat.jpeg", FileMode.Open),
-                        //    Caption = "Cat.jpeg"
-                        //});
-                        //
-                        //// send an audio file
-                        //var audioMessage = await socket.SendMessage(msg.Key.RemoteJid, new AudioMessageContent()
-                        //{
-                        //    Audio = File.Open($"{Directory.GetCurrentDirectory()}\\Media\\sonata.mp3", FileMode.Open),
-                        //});
-                        //
-                        //// send an audio file
-                        //var videoMessage = await socket.SendMessage(msg.Key.RemoteJid, new VideoMessageContent()
-                        //{
-                        //    Video = File.Open($"{Directory.GetCurrentDirectory()}\\Media\\ma_gif.mp4", FileMode.Open),
-                        //    GifPlayback = true
-                        //});
-                        // 
-                        //// send a document file
-                        //var documentMessage = await socket.SendMessage(msg.Key.RemoteJid, new DocumentMessageContent()
-                        //{
-                        //    Document = File.Open($"{Directory.GetCurrentDirectory()}\\Media\\file.pdf", FileMode.Open),
-                        //    Mimetype = "application/pdf",
-                        //    FileName = "proposal.pdf",
-                        //});
+                        var imageMessage = await socket.SendMessage(msg.Key.RemoteJid, new ImageMessageContent()
+                        {
+                            Image = File.Open($"{Directory.GetCurrentDirectory()}\\Media\\cat.jpeg", FileMode.Open),
+                            Caption = "Cat.jpeg"
+                        });
+
+                        // send an audio file
+                        var audioMessage = await socket.SendMessage(msg.Key.RemoteJid, new AudioMessageContent()
+                        {
+                            Audio = File.Open($"{Directory.GetCurrentDirectory()}\\Media\\sonata.mp3", FileMode.Open),
+                        });
+
+                        // send an audio file
+                        var videoMessage = await socket.SendMessage(msg.Key.RemoteJid, new VideoMessageContent()
+                        {
+                            Video = File.Open($"{Directory.GetCurrentDirectory()}\\Media\\ma_gif.mp4", FileMode.Open),
+                            GifPlayback = true
+                        });
+
+                        // send a document file
+                        var documentMessage = await socket.SendMessage(msg.Key.RemoteJid, new DocumentMessageContent()
+                        {
+                            Document = File.Open($"{Directory.GetCurrentDirectory()}\\Media\\file.pdf", FileMode.Open),
+                            Mimetype = "application/pdf",
+                            FileName = "proposal.pdf",
+                        });
 
 
 
@@ -279,9 +280,67 @@ namespace WhatsSocketConsole
 
             if (connection.Connection == WAConnectionState.Open)
             {
-                Console.WriteLine("Now you can send messages");
 
-                //var ppurl = await socket.ProfilePictureUrl("xxx@s.whatsapp.net", ProfilePictureUrlType.Image);
+                //var mentioned = await socket.SendMessage("27797798179@s.whatsapp.net ", new TextMessageContent()
+                //{
+                //    Text = $"Hi this is a button",
+                //    //Buttons = [
+                //    //
+                //    //    new Message.Types.ButtonsMessage.Types.Button()
+                //    //    {
+                //    //        ButtonId = "btn1",
+                //    //        ButtonText = new Message.Types.ButtonsMessage.Types.Button.Types.ButtonText()
+                //    //        {
+                //    //            DisplayText = "Test 1"
+                //    //        },
+                //    //        Type = Message.Types.ButtonsMessage.Types.Button.Types.Type.Response
+                //    //    }
+                //    //]
+                //});
+
+                var result = await socket.QueryRecommendedNewsletters();
+
+                //var onWhatsApp = await socket.OnWhatsApp("+27797798179", "+15558889234");
+
+                //var count = onWhatsApp.Length;
+                //var letter = result.Result[0];
+                //await socket.NewsletterFollow(letter.Id);
+                //await socket.NewsletterMute(letter.Id);
+                //await socket.NewsletterUnMute(letter.Id);
+                //await socket.NewsletterUnFollow(letter.Id);
+
+
+
+
+                //await socket.AcceptTOSNotice();
+                //var nl = await socket.NewsletterCreate("Test Newsletter");
+                //await socket.NewsletterUpdateName(nl.Id, "Newsletter Name");
+                //await socket.NewsletterUpdateDescription(nl.Id, "Newsletter Description");
+                //var admin = await socket.NewsletterAdminCount(nl.Id);
+
+                //var info = await socket.NewsletterMetadata("120363184364170818@newsletter", BaileysCSharp.Core.Models.Newsletters.NewsletterMetaDataType.JID);
+
+
+
+                //var snd = await socket.SendNewsletterMessage("120363285541953068@newsletter", new NewsletterTextMessage()
+                //{
+                //    Text = "Hello Channel"
+                //});
+
+                //await socket.NewsletterDelete(nl.Id);
+                //var imageMessage = await socket.SendMessage(nl.Id, new ImageMessageContent()
+                //{
+                //    Image = File.Open($"{Directory.GetCurrentDirectory()}\\Media\\icon.png", FileMode.Open),
+                //    Caption = "Cat.jpeg"
+                //});
+
+                //Thread.Sleep(10000);
+                //await socket.NewsletterDelete(nl.Id);
+
+                //var standard = await socket.SendMessage("27797798179@s.whatsapp.net", new TextMessageContent()
+                //{
+                //    Text = "Hi there from C#",
+                //});
 
             }
         }
